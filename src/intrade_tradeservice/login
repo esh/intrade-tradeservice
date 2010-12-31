@@ -1,0 +1,35 @@
+Response Headers
+Server	Apache-Coyote/1.1
+Set-Cookie	refinfo="[1][102>1293765249]"; Version=1; Max-Age=1296000; Path=/
+Content-Type	text/html;charset=UTF-8
+Transfer-Encoding	chunked
+Content-Encoding	gzip
+Vary	Accept-Encoding
+Date	Fri, 31 Dec 2010 03:14:09 GMT
+Request Headersview source
+Host	www.intrade.com
+User-Agent	Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.1.7) Gecko/20100106 Ubuntu/9.10 (karmic) Firefox/3.5.7
+Accept	text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language	en-us,en;q=0.5
+Accept-Encoding	gzip,deflate
+Accept-Charset	ISO-8859-1,utf-8;q=0.7,*;q=0.7
+Keep-Alive	300
+Connection	keep-alive
+Referer	https://www.intrade.com/
+Cookie	JSESSIONID=28B5032E2928AA358FCE65B2AD666C72; __utma=132708054.711038392.1293756041.1293756041.1293764846.2; __utmc=132708054; __utmz=132708054.1293764846.2.2.utmccn=(referral)|utmcsr=play.intrade.com|utmcct=/|utmcmd=referral; __utmv=132708054.view_page%3Dhomepage; refinfo="[1][102>1293765248]"; username=esh2chan; gsxsdata=759e1c067baa6b2a529068a47c22ced0ZACED0005740008657368326368616EZ98203BF28CACD2F3F2519A35F8A9A8A2F7513DD9639D0EF17A2948DCD15317CFA9D90B86E6689137B921DE778E07D7E557354DA2BB88B03302D2D1A6DFF6B8426C3449CD21C3CF0F3122C95DB6A0E6C7C23C4D28F5ADCD89C4C3C0E2ED4FDE72391C4032312B87B162021782BFA6DE8EE857DE9CFBE88664B82B8149255F89D326AC916AA83BADB132FDA0D4F84F0055215DD670D1D445CED9B24A35298C538AE7503A5362F8DD7F684D29B186E402FE7BCB8228F21CB8427E389FE70365E20D6DED8DF9474BF8DAB7A511794FB50021464EB24729406416DAD23FBC30FC5D7FC3B078C99172DA5EFE7ABF09E7C76DFA0DBD97F9F0DF0ECB55DA162892479048B70F49C13D707283A388FF4996C98E5719035495D11610FFB228ECA44B0374B2; __utmb=132708054
+
+Parameters
+application/x-www-form-urlencoded
+reason	
+reasonCode	
+request_operation	main
+request_type	action
+Source
+Content-Type: application/x-www-form-urlencoded Content-Length: 62 request_operation=main&request_type=action&reason=&reasonCode=Parametersapplication/x-www-form-urlencoded
+reason	
+reasonCode	
+request_operation	main
+request_type	action
+Source
+Content-Type: application/x-www-form-urlencoded Content-Length: 62 request_operation=main&request_type=action&reason=&reasonCode=
+
