@@ -54,6 +54,12 @@
 
 (defn logout)
 
+(defn md []
+	(http-get
+		"http://play.intrade.com/jsp/intrade/trading/mdupdate.jsp?conID=318412&selConID=318412"
+		(deref *cookies*)
+		{HttpMethodParams/USER_AGENT *user-agent*}))
+
 (defn send-order [order])
 
 (defn cancel-order [order])
