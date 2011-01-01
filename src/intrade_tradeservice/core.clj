@@ -1,15 +1,22 @@
 (ns tradeservice 
-	(:require [clj-http.client :as client])
-	(:import [java.net URLEncoder]))
+	(:import (org.apache.commons.httpclient HttpClient))
+	(:import (org.apache.commons.httpclient.methods PostMethod))
+	(:import (java.net URLEncoder)))
 
 (defn urlencode [name-values]
 	(apply str (interpose "&" (map #(apply str [
 		(URLEncoder/encode (key %)) "=" (URLEncoder/encode (val %))])
 		(seq name-values)))))
 
+(defn post [url]
+	(let [
+		client (new HttpClient)
+		method (new PostMethod url)
+		status (.executeMethod client method)]
+		(try { :status status :body (new String (.getResponseBody method)) }
+			(finally (.releaseConnection method)))))
 
-(defn login [url]
-	(client/get url))
+(defn login [url])
 
 (defn logout)
 

@@ -2,4 +2,4 @@
   :description "tradeservice for intrade"
   :dependencies [[org.clojure/clojure "1.2.0"]
                  [org.clojure/clojure-contrib "1.2.0"]
-		 [clj-http "0.1.2"]])
+		 [commons-httpclient/commons-httpclient "3.1"]])
