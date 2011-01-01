@@ -9,11 +9,12 @@
 		(URLEncoder/encode (key %)) "=" (URLEncoder/encode (val %))])
 		(seq name-values)))))
 
-(defn post [url]
+(defn post [site path]
 	(let [client (new HttpClient)
-	      method (new PostMethod url)]
+	      method (new PostMethod path)]
 		(try
 			(.setCookiePolicy (.getParams client) CookiePolicy/BROWSER_COMPATIBILITY)
+			(.setHost (.getHostConfiguration client) site 80 "http")
 			{:status (.executeMethod client method)
 			 :body (new String (.getResponseBody method))}
 			(finally (.releaseConnection method)))))
