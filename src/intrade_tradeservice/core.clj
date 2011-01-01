@@ -7,6 +7,7 @@
 (def *user-agent* "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.1.7) Gecko/20100106 Ubuntu/9.10 (karmic) Firefox/3.5.7")
 
 (def *cookies* (ref ()))
+(def *url* (ref ""))
 
 (defn http-req [method cookies params body]
 	(let [client (new HttpClient)
@@ -49,14 +50,16 @@
 		(get login1 :cookies)
 		{HttpMethodParams/USER_AGENT *user-agent*
 		"Referer" url})]
-		(dosync (ref-set *cookies* (get login2 :cookies)))
+		(dosync
+			(ref-set *cookies* (get login2 :cookies))
+			(ref-set *url* url))
 		(= 200 (get login2 :status))))
 
 (defn logout)
 
-(defn md []
+(defn md [contract-id]
 	(http-get
-		"http://play.intrade.com/jsp/intrade/trading/mdupdate.jsp?conID=318412&selConID=318412"
+		(apply str [(deref *url*) "jsp/intrade/trading/mdupdate.jsp?conID=" contract-id "&selConID=" contract-id])
 		(deref *cookies*)
 		{HttpMethodParams/USER_AGENT *user-agent*}))
 
