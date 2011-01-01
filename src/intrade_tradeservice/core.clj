@@ -1,21 +1,33 @@
 (ns tradeservice 
-	(:import (org.apache.commons.httpclient HttpClient))
-	(:import (org.apache.commons.httpclient.methods PostMethod))
-	(:import (org.apache.commons.httpclient.cookie CookiePolicy CookieSpec))
-	(:import (java.net URLEncoder)))
+	(:import (org.apache.commons.httpclient HttpClient NameValuePair))
+	(:import (org.apache.commons.httpclient.methods GetMethod PostMethod))
+	(:import (org.apache.commons.httpclient.cookie CookiePolicy CookieSpec)))
 
-(defn urlencode [name-values]
-	(apply str (interpose "&" (map #(apply str [
-		(URLEncoder/encode (key %)) "=" (URLEncoder/encode (val %))])
-		(seq name-values)))))
+(defn pairs [body] 
+	(map #(new NameValuePair (key %) (val %)) (seq body))) 
 
-(defn post [site path]
+(defn http-post [site path body]
 	(let [client (new HttpClient)
-	      method (new PostMethod path)]
+	      method (new PostMethod path)
+	      cookie-spec (CookiePolicy/getDefaultSpec)]
+		(try
+			(.setCookiePolicy (.getParams client) CookiePolicy/BROWSER_COMPATIBILITY)
+			(.setHost (.getHostConfiguration client) site 80 "http")
+			(.setRequestBody method (into-array NameValuePair (map #(new NameValuePair (key %) (val %)) (seq body))))
+			{:status (.executeMethod client method)
+			 :cookies (seq (.match cookie-spec site 80 "/" false (.getCookies (.getState client))))
+			 :body (new String (.getResponseBody method))}
+			(finally (.releaseConnection method)))))
+
+(defn http-get [site path]
+	(let [client (new HttpClient)
+	      method (new GetMethod path)
+	      cookie-spec (CookiePolicy/getDefaultSpec)]
 		(try
 			(.setCookiePolicy (.getParams client) CookiePolicy/BROWSER_COMPATIBILITY)
 			(.setHost (.getHostConfiguration client) site 80 "http")
 			{:status (.executeMethod client method)
+			 :cookies (seq (.match cookie-spec site 80 "/" false (.getCookies (.getState client))))
 			 :body (new String (.getResponseBody method))}
 			(finally (.releaseConnection method)))))
 
