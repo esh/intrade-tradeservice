@@ -57,11 +57,20 @@
 
 (defn logout)
 
-(defn md [contract-id]
+(defn get-md [contract-id]
 	(http-get
 		(apply str [(deref *url*) "jsp/intrade/trading/mdupdate.jsp?conID=" contract-id "&selConID=" contract-id])
 		(deref *cookies*)
 		{HttpMethodParams/USER_AGENT *user-agent*}))
+
+(defn argh []  
+	(let [parser #(let [s (.split (.substring % 7 (- (.length %) 1)) ",")
+			qty (Integer/parseInt (nth s 1))
+			price (Float/parseFloat (.substring (nth s 2) 1 (- (.length (nth s 2)) 1)))]
+			{:qty qty :price price})]
+		{:bids (map parser (re-seq #"setBid\(.*\)" m))
+		 :offers (map parser (re-seq #"setOffer\(.*\)" m))}))
+						
 
 (defn send-order [order])
 
