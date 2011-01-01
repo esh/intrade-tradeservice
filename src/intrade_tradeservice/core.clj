@@ -9,8 +9,7 @@
 (defn http-post [protocol site path params body]
 	(let [client (new HttpClient)
 	      method (new PostMethod path)
-	      port (if (= protocol "https") 443 80)
-	      cookie-spec (CookiePolicy/getDefaultSpec)]
+	      port (if (= protocol "https") 443 80)]
 		(try
 			(dorun (map #(.setParameter (.getParams client) (key %) (val %)) (seq params)))
 			(.setCookiePolicy (.getParams client) CookiePolicy/BROWSER_COMPATIBILITY)
@@ -18,7 +17,7 @@
 			(.setRequestBody method (into-array NameValuePair (map #(new NameValuePair (key %) (val %)) (seq body))))
 
 			(let [status (.executeMethod client method)
-			      cookies (seq (.match cookie-spec site port "/" false (.getCookies (.getState client))))
+			      cookies (seq (.getCookies (.getState client)))
 			      location-header (.getResponseHeader method "location")
 			      location (if (not (= nil location-header)) (.getValue location-header) nil)
 			      body (new String (.getResponseBody method))]
