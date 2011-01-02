@@ -60,7 +60,7 @@
 				(= 'logged-in (ref-set *state* 'logged-in))
 				(throw (new Exception "could not login"))))))
 
-(defn logout)
+(defn logout (dosync (ref-set *cookies* ()) (ref-set *state* 'logged-out)))
 
 (defn get-quote [contract-id]
 	(let [parser #(let [s (.split (.substring % 7 (- (.length %) 1)) ",")
@@ -88,3 +88,4 @@
 (defn add-quote-listener [listener])
 
 (defn add-order-listener [listener])
+
