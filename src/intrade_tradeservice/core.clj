@@ -8,7 +8,7 @@
 (def *user-agent* "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.1.7) Gecko/20100106 Ubuntu/9.10 (karmic) Firefox/3.5.7")
 
 (def *state* (ref 'logged-out))
-(def *quote* (ref ()))
+(def *quotes* (atom {}))
 (def *cookies* (ref ()))
 (def *url* (ref ""))
 
@@ -31,11 +31,10 @@
 
 			(finally (.releaseConnection method)))))
 
-(defn http-post [url cookies params body] (http-req (new PostMethod url) cookies params body))
+
 
 
 (defn http-get [url cookies params] (http-req (new GetMethod url) cookies params nil))
-
 (defn login [url username password]
 	(let [login1 (http-post
 		"https://www.intrade.com"	
@@ -60,7 +59,9 @@
 				(= 'logged-in (ref-set *state* 'logged-in))
 				(throw (new Exception "could not login"))))))
 
-(defn logout (dosync (ref-set *cookies* ()) (ref-set *state* 'logged-out)))
+(defn logout [] (dosync (do (ref-set *cookies* ()  (ref-set *state* 'logged-out)))))
+
+(defn bind-quote [contract-id] (swap! *quotes* #(assoc % contract-id (ref {}))))
 
 (defn get-quote [contract-id]
 	(let [parser #(let [s (.split (.substring % 7 (- (.length %) 1)) ",")
@@ -75,10 +76,11 @@
 	      body (get res :body)]
 		(if (= status 200) 
 			(dosync
-				(ref-set *quote* {:contract-id contract-id
-						  :timestamp (.parse (new SimpleDateFormat "h:mm:ssa z") (first (re-seq #"\d{1,2}:\d{2}:\d{2}\w{2} GMT" body))) 
-						  :bids (map parser (re-seq #"setBid\(.*\)" body))
-						  :offers (map parser (re-seq #"setOffer\(.*\)" body))}))
+				(ref-set (get @*quotes* contract-id)
+					{:contract-id contract-id
+	                                 :timestamp (.parse (new SimpleDateFormat "h:mm:ssa z") (first (re-seq #"\d{1,2}:\d{2}:\d{2}\w{2} GMT" body))) 
+					 :bids (map parser (re-seq #"setBid\(.*\)" body))
+					 :offers (map parser (re-seq #"setOffer\(.*\)" body))}))
 			(throw (new Exception (apply str ["get-md got " status " from server"]))))))
 						
 (defn send-order [order])
@@ -88,4 +90,3 @@
 (defn add-quote-listener [listener])
 
 (defn add-order-listener [listener])
-
