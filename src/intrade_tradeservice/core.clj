@@ -2,7 +2,8 @@
 	(:import (org.apache.commons.httpclient HttpClient HttpState NameValuePair))
 	(:import (org.apache.commons.httpclient.methods GetMethod PostMethod))
 	(:import (org.apache.commons.httpclient.params HttpMethodParams))
-	(:import (org.apache.commons.httpclient.cookie CookiePolicy CookieSpec)))
+	(:import (org.apache.commons.httpclient.cookie CookiePolicy CookieSpec))
+	(:import (java.text SimpleDateFormat)))
 
 (def *user-agent* "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.1.7) Gecko/20100106 Ubuntu/9.10 (karmic) Firefox/3.5.7")
 
@@ -66,13 +67,13 @@
 			(apply str [(deref *url*) "jsp/intrade/trading/mdupdate.jsp?conID=" contract-id "&selConID=" contract-id])
 			(deref *cookies*)
 			{HttpMethodParams/USER_AGENT *user-agent*})
-	      status (get res :status)]
-
+	      status (get res :status)
+	      body (get res :body)]
 		(if (= status 200) 
 			{:contract-id contract-id
-			 :timestamp nil
-			 :bids (map parser (re-seq #"setBid\(.*\)" m))
-		 	 :offers (map parser (re-seq #"setOffer\(.*\)" m))}
+			 :timestamp (.parse (new SimpleDateFormat "h:mm:ssa z") (first (re-seq #"\d{1,2}:\d{2}:\d{2}\w{2} GMT" body))) 
+			 :bids (map parser (re-seq #"setBid\(.*\)" body))
+		 	 :offers (map parser (re-seq #"setOffer\(.*\)" body))}
 			(throw (new Exception (apply str ["get-md got " status " from server"]))))))
 						
 
@@ -80,4 +81,6 @@
 
 (defn cancel-order [order])
 
-(defn add-listener [order])
+(defn add-quote-listener [listener])
+
+(defn add-order-listener [listener])
