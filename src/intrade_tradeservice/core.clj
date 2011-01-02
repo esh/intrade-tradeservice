@@ -7,6 +7,8 @@
 
 (def *user-agent* "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.1.7) Gecko/20100106 Ubuntu/9.10 (karmic) Firefox/3.5.7")
 
+(def *state* (ref 'logged-out))
+(def *quote* (ref ()))
 (def *cookies* (ref ()))
 (def *url* (ref ""))
 
@@ -53,12 +55,14 @@
 		"Referer" url})]
 		(dosync
 			(ref-set *cookies* (get login2 :cookies))
-			(ref-set *url* url))
-		(= 200 (get login2 :status))))
+			(ref-set *url* url)
+			(if (= 200 (get login2 :status))
+				(= 'logged-in (ref-set *state* 'logged-in))
+				(throw (new Exception "could not login"))))))
 
 (defn logout)
 
-(defn get-md [contract-id]
+(defn get-quote [contract-id]
 	(let [parser #(let [s (.split (.substring % 7 (- (.length %) 1)) ",")
 			qty (Integer/parseInt (nth s 1))
 			price (Float/parseFloat (.substring (nth s 2) 1 (- (.length (nth s 2)) 1)))]
@@ -70,13 +74,13 @@
 	      status (get res :status)
 	      body (get res :body)]
 		(if (= status 200) 
-			{:contract-id contract-id
-			 :timestamp (.parse (new SimpleDateFormat "h:mm:ssa z") (first (re-seq #"\d{1,2}:\d{2}:\d{2}\w{2} GMT" body))) 
-			 :bids (map parser (re-seq #"setBid\(.*\)" body))
-		 	 :offers (map parser (re-seq #"setOffer\(.*\)" body))}
+			(dosync
+				(ref-set *quote* {:contract-id contract-id
+						  :timestamp (.parse (new SimpleDateFormat "h:mm:ssa z") (first (re-seq #"\d{1,2}:\d{2}:\d{2}\w{2} GMT" body))) 
+						  :bids (map parser (re-seq #"setBid\(.*\)" body))
+						  :offers (map parser (re-seq #"setOffer\(.*\)" body))}))
 			(throw (new Exception (apply str ["get-md got " status " from server"]))))))
 						
-
 (defn send-order [order])
 
 (defn cancel-order [order])
