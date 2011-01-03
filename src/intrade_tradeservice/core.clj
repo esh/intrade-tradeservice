@@ -17,10 +17,26 @@
 	      init-state (new HttpState)]
 		(try
 			(dorun (map #(.addCookie init-state %) cookies))
-			(dorun (map #(.setParameter (.getParams client) (key %) (val %)) (seq params)))
-			(.setCookiePolicy (.getParams client) CookiePolicy/BROWSER_COMPATIBILITY)
+			(dorun (map
+				#(.setParameter 
+					(.getParams client)
+					(key %)
+					(val %))
+				(seq params)))
+			(.setCookiePolicy
+				(.getParams client)
+				CookiePolicy/BROWSER_COMPATIBILITY)
 			(.setState client init-state)
-			(if (not (= nil body)) (.setRequestBody method (into-array NameValuePair (map #(new NameValuePair (key %) (val %)) (seq body)))))
+
+			(if (not (= nil body))
+				(.setRequestBody
+					method
+					(into-array
+						NameValuePair
+						(map #(new NameValuePair 
+							(key %)
+							(val %))
+						     (seq body)))))
 
 			(let [status (.executeMethod client method)
 			      cookies (seq (.getCookies (.getState client)))
@@ -61,7 +77,7 @@
 
 (defn logout [] (dosync (do (ref-set *cookies* ()  (ref-set *state* 'logged-out)))))
 
-(defn bind-quote [contract-id] (swap! *quotes* #(assoc % contract-id (ref {}))))
+(defn bind-quote [contract-id] (send *quotes* #(assoc % contract-id {})))
 
 (defn get-quote [contract-id]
 	(let [parser
