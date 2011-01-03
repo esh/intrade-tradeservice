@@ -122,7 +122,7 @@
 
 (.start (new Thread (fn [] (loop []
 	(if (= 'logged-in @*state*)
-		(map get-quote (keys @*quotes*)))
-	
+		(send *quotes* #(zipmap (keys %) (map get-quote (keys %)))))
+				
 	(Thread/sleep 5000)	
 	(recur)))))
