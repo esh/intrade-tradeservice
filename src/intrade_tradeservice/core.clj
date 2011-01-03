@@ -75,7 +75,7 @@
 				(= 'logged-in (ref-set *state* 'logged-in))
 				(throw (new Exception "could not login"))))))
 
-(defn logout [] (dosync (do (ref-set *cookies* ()  (ref-set *state* 'logged-out)))))
+(defn logout [] (dosync (do (ref-set *cookies* ()) (ref-set *state* 'logged-out))))
 
 (defn bind-quote [contract-id] (send *quotes* #(assoc % contract-id {})))
 
@@ -124,5 +124,5 @@
 	(if (= 'logged-in @*state*)
 		(send *quotes* #(zipmap (keys %) (map get-quote (keys %)))))
 				
-	(Thread/sleep 5000)	
+	(Thread/sleep 1000)	
 	(recur)))))
