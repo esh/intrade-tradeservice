@@ -88,41 +88,43 @@
 				1
 				(- (.length (nth s 2)) 1)))]
 			{:qty qty :price price})
-	      res (http-get
+	      getter 
+		#(http-get
 			(apply str [(deref *url*)
 				    "jsp/intrade/trading/mdupdate.jsp?conID="
-				    contract-id
+				    % 
 				    "&selConID="
-				    contract-id])
+				    %])
 			(deref *cookies*)
 			{HttpMethodParams/USER_AGENT *user-agent*})
-	      status (get res :status)
-	      body (get res :body)]
-		(if (= status 200) 
-			{:contract-id contract-id
-	                 :timestamp (.parse 
-				(new SimpleDateFormat "h:mm:ssa z")
-				(first (re-seq
-					#"\d{1,2}:\d{2}:\d{2}\w{2} GMT"
-					body))) 
-			 :bids (map parser (re-seq #"setBid\(.*\)" body))
-			 :offers (map parser (re-seq #"setOffer\(.*\)" body))}
-		(throw (new Exception
-			(apply str ["get-md got "
-				    status
-				    " from server"]))))))
-						
+	      extractor
+		#(let[contract-id (get % :contract-id)
+		      res (getter contract-id)
+		      status (get res :status)
+		      body (get res :body)]
+			(if (= status 200) 
+				{:contract-id contract-id 
+				 :timestamp (.parse 
+					(new SimpleDateFormat "h:mm:ssa z")
+					(first (re-seq
+						#"\d{1,2}:\d{2}:\d{2}\w{2} GMT"
+						body))) 
+				 :bids (map parser (re-seq #"setBid\(.*\)" body))
+				 :offers (map parser (re-seq #"setOffer\(.*\)" body))}
+			(throw (new Exception
+				(apply str ["get-md got "
+					    status
+					    " from server"])))))
+	      quote (agent {:contract-id contract-id})]
+		(.start (new Thread (fn [] (loop []
+			(if (= 'logged-in @*state*)
+				(send quote #(extractor %)))
+			(Thread/sleep 1000)	
+			(recur)))))
+		quote))
+	      						
 (defn send-order [order])
 
-(defn cancel-order [order])
+(defn cancel-order [])
 
-(defn add-quote-listener [listener])
 
-(defn add-order-listener [listener])
-
-(.start (new Thread (fn [] (loop []
-	(if (= 'logged-in @*state*)
-		(send *quotes* #(zipmap (keys %) (map get-quote (keys %)))))
-				
-	(Thread/sleep 1000)	
-	(recur)))))
