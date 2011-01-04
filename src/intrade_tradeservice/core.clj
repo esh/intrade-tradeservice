@@ -44,7 +44,6 @@
 			      location (if (not (= nil location-header)) (.getValue location-header) nil)
 			      body (new String (.getResponseBody method))]
 				{:status status :cookies cookies :body body :location location})
-
 			(finally (.releaseConnection method)))))
 
 (defn http-post [url cookies params body] (http-req (new PostMethod url) cookies params body))
@@ -90,11 +89,11 @@
 			{:qty qty :price price})
 	      getter 
 		#(http-get
-			(apply str [(deref *url*)
-				    "jsp/intrade/trading/mdupdate.jsp?conID="
-				    % 
-				    "&selConID="
-				    %])
+			(str (deref *url*)
+			     "jsp/intrade/trading/mdupdate.jsp?conID="
+			     % 
+			     "&selConID="
+			     %)
 			(deref *cookies*)
 			{HttpMethodParams/USER_AGENT *user-agent*})
 	      extractor
@@ -112,9 +111,7 @@
 				 :bids (map parser (re-seq #"setBid\(.*\)" body))
 				 :offers (map parser (re-seq #"setOffer\(.*\)" body))}
 			(throw (new Exception
-				(apply str ["get-md got "
-					    status
-					    " from server"])))))
+				(str "get-md got " status " from server")))))
 	      quote (agent {:contract-id contract-id})]
 		(.start (new Thread (fn [] (loop []
 			(if (= 'logged-in @*state*)
@@ -122,8 +119,27 @@
 			(Thread/sleep 1000)	
 			(recur)))))
 		quote))))
-	      						
-(defn send-order [order])
+
+(defn send-order [& {:keys [contract-id side price qty tif]}]					
+	(let [res (http-post
+		@*url*
+		@*cookies* 
+		{HttpMethodParams/USER_AGENT *user-agent*}
+		{"contractID" (str contract-id)
+		 "killtime" nil	
+		 "limitPrice" (str price)
+		 "minutesTillExpiry" nil	
+		 "orderType" "L"
+  		 "originalQuantity" (str qty)
+		 "quantity" (str qty)
+		 "request_operation" "enterOrder"
+		 "request_type" "request"
+		 "resetLifetime" "gfs"
+		 "side" "B"
+		 "timeInForce" "2"
+		 "touchPrice" nil	
+		 "type" "L"})]
+		(get res :body)))
 
 (defn cancel-order [])
 
