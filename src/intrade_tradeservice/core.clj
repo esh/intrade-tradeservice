@@ -79,7 +79,7 @@
 
 (defn bind-quote [contract-id] (send *quotes* #(assoc % contract-id {})))
 
-(defn get-quote [contract-id]
+(def get-quote (memoize (fn [contract-id]
 	(let [parser
 		#(let [s (.split (.substring % 7 (- (.length %) 1)) ",")
 		       qty (Integer/parseInt (nth s 1))
@@ -121,7 +121,7 @@
 				(send quote #(extractor %)))
 			(Thread/sleep 1000)	
 			(recur)))))
-		quote))
+		quote))))
 	      						
 (defn send-order [order])
 
