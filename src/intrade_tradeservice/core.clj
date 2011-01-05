@@ -76,8 +76,6 @@
 
 (defn logout [] (dosync (do (ref-set *cookies* ()) (ref-set *state* 'logged-out))))
 
-(defn bind-quote [contract-id] (send *quotes* #(assoc % contract-id {})))
-
 (def get-quote (memoize (fn [contract-id]
 	(let [parser
 		#(let [s (.split (.substring % 7 (- (.length %) 1)) ",")
@@ -120,7 +118,7 @@
 			(recur)))))
 		quote))))
 
-(defn send-order [& {:keys [contract-id side price qty tif]}]					
+(defn send-order [& {:keys [contract-id side price qty tif]}]
 	(let [res (http-post
 		@*url*
 		@*cookies* 
@@ -138,9 +136,17 @@
 		 "side" "B"
 		 "timeInForce" "2"
 		 "touchPrice" nil	
-		 "type" "L"})]
-		(get res :body)))
+		 "type" "L"})
+		body (get res :body)
+		order (agent (if (re-seq #"order has been accepted" body)
+			{:contract-id contract-id
+			 :state 'NEW
+			 :order-id
+				(Integer/parseInt (nth
+					(first (re-seq #"contractID\"\D+(\d+)\">" body))
+					 1))}
+			{:contract-id contract-id
+			 :state 'REJECTED}))]
+		order))
 
 (defn cancel-order [])
-
-
