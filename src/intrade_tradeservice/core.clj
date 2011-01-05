@@ -1,6 +1,6 @@
 (ns tradeservice 
 	(:import (org.apache.commons.httpclient HttpClient HttpState NameValuePair))
-	(:import (org.apache.commons.httpclient.methods GetMethod PostMethod))
+i(:import (org.apache.commons.httpclient.methods GetMethod PostMethod))
 	(:import (org.apache.commons.httpclient.params HttpMethodParams))
 	(:import (org.apache.commons.httpclient.cookie CookiePolicy CookieSpec))
 	(:import (java.text SimpleDateFormat)))
@@ -133,7 +133,7 @@
 		 "request_operation" "enterOrder"
 		 "request_type" "request"
 		 "resetLifetime" "gfs"
-		 "side" "B"
+		 "side" (when side (case 'BUY "B") (case 'SELL "S"))
 		 "timeInForce" "2"
 		 "touchPrice" nil	
 		 "type" "L"})
@@ -150,3 +150,11 @@
 		order))
 
 (defn cancel-order [])
+
+(defn check-order []
+	(let [res (http-get
+		(str @*url*
+		     "jsp/intrade/trading/t_p.jsp?reportType=1&fType=0&statusFilter=5&dateFilter=0&filter=All")
+		@*cookies*
+		{HttpMethodParams/USER_AGENT *user-agent*})]
+		(.replaceAll (get res :body) "(\r\n)|\t" "")))
