@@ -1,6 +1,6 @@
 (ns tradeservice 
 	(:import (org.apache.commons.httpclient HttpClient HttpState NameValuePair))
-i(:import (org.apache.commons.httpclient.methods GetMethod PostMethod))
+	(:import (org.apache.commons.httpclient.methods GetMethod PostMethod))
 	(:import (org.apache.commons.httpclient.params HttpMethodParams))
 	(:import (org.apache.commons.httpclient.cookie CookiePolicy CookieSpec))
 	(:import (java.text SimpleDateFormat)))
@@ -157,4 +157,20 @@ i(:import (org.apache.commons.httpclient.methods GetMethod PostMethod))
 		     "jsp/intrade/trading/t_p.jsp?reportType=1&fType=0&statusFilter=5&dateFilter=0&filter=All")
 		@*cookies*
 		{HttpMethodParams/USER_AGENT *user-agent*})]
-		(.replaceAll (get res :body) "(\r\n)|\t" "")))
+		(map
+			#(let [s (.split
+					(.replaceAll (.replaceAll % "<.+?>" " ") " +" " ")
+					" ")
+			       order-id (nth s 1)
+			       qty (Integer/parseInt (nth s 4))
+			       cum-qty (- qty (Integer/parseInt (nth s 5)))
+			       avg-price (Float/parseFloat (nth s 6))
+			       state (symbol (nth s 12))]
+				{:order-id order-id 
+				 :qty qty 
+				 :cum-qty cum-qty
+				 :avg-price avg-price
+				 :state state})
+			(re-seq
+				#"<tr class=reportRow.+?/tr>"
+				(.replaceAll (get res :body) "(\r\n)|\t" "")))))
