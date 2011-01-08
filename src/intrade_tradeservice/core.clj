@@ -8,8 +8,9 @@
 (def *user-agent* "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.1.7) Gecko/20100106 Ubuntu/9.10 (karmic) Firefox/3.5.7")
 
 (def *state* (atom 'logged-out))
-(def *cookies* (atom ()))
 (def *url* (atom ""))
+(def *cookies* (atom ()))
+(def *active-orders* (atom {}))
 
 (defn http-req [method cookies params body]
 	(let [client (new HttpClient)
@@ -147,6 +148,7 @@
 					 1))}
 			{:contract-id contract-id
 			 :state 'REJECTED}))]
+		(swap! *active-orders* merge @*active-orders* {contract-id order})
 		order))
 
 (defn cancel-order [])
