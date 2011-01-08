@@ -123,7 +123,9 @@
 		quote))))
 
 (defn send-order [& {:keys [contract-id side price qty tif]}]
-	(let [res (http-post
+	(let [side (when side (case 'Buy "B") (case 'Sell "S"))
+	      tif (when tif (case 'GFS' "gfs") (case 'FOK "fok" ))
+	      res (http-post
 		@*url*
 		@*cookies* 
 		{HttpMethodParams/USER_AGENT *user-agent*}
@@ -134,8 +136,8 @@
 		 "orderType" "L"
   		 "originalQuantity" (str qty)
 		 "quantity" (str qty) "request_operation" "enterOrder" "request_type" "request"
-		 "resetLifetime" "gfs"
-		 "side" (when side (case 'BUY "B") (case 'SELL "S"))
+		 "resetLifetime" tif
+		 "side" side 
 		 "timeInForce" "2"
 		 "touchPrice" nil	
 		 "type" "L"})
@@ -145,14 +147,20 @@
 				(nth (first (re-seq #"Order ID\D+(\d+)" body)) 1))
 			      order (agent {:order-id order-id
 					    :contract-id contract-id
-				 	    :state 'NEW})]
+					    :side side
+					    :tif tif 
+					    :qty qty
+				 	    :state 'New})]
 				(swap!
 					*active-orders*
 					merge
 					@*active-orders*
 					{order-id order}))
 			(agent {:contract-id contract-id
-			 	:state 'REJECTED}))))
+			        :side side
+			        :tif tif 
+				:qty qty
+			 	:state 'Rejected}))))
 		
 (defn cancel-order [])
 
@@ -162,7 +170,7 @@
 		     "jsp/intrade/trading/t_p.jsp?reportType=1&fType=0&statusFilter=5&dateFilter=0&filter=All")
 		@*cookies*
 		{HttpMethodParams/USER_AGENT *user-agent*})]
-		(map
+		(doall (map
 			#(let [s (.split
 					(.replaceAll (.replaceAll % "<.+?>" " ") " +" " ")
 					" ")
@@ -191,10 +199,11 @@
 							new-order))))
 			(re-seq
 				#"<tr class=reportRow.+?/tr>"
-				(.replaceAll (get res :body) "(\r\n)|\t" "")))))
+				(.replaceAll (get res :body) "(\r\n)|\t" ""))))))
 
 (.start (new Thread (fn []
 	(loop []
 		(if (= 'logged-in @*state*)
-			(doall (check-order)))
+			(check-order))
+		(Thread/sleep 1000)	
 		(recur)))))
