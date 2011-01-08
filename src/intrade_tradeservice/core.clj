@@ -188,3 +188,9 @@
 			(re-seq
 				#"<tr class=reportRow.+?/tr>"
 				(.replaceAll (get res :body) "(\r\n)|\t" "")))))
+
+(.start (new Thread (fn []
+	(loop []
+		(if (= 'logged-in @*state*)
+			(doall (check-order)))
+		(recur)))))
