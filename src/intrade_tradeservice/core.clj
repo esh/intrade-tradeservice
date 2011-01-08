@@ -3,7 +3,9 @@
 	(:import (org.apache.commons.httpclient.methods GetMethod PostMethod))
 	(:import (org.apache.commons.httpclient.params HttpMethodParams))
 	(:import (org.apache.commons.httpclient.cookie CookiePolicy CookieSpec))
-	(:import (java.text SimpleDateFormat)))
+	(:import (java.text SimpleDateFormat))
+	(:import (java.lang StringBuilder))
+	(:import (java.io BufferedReader InputStreamReader)))
 
 (def *user-agent* "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.1.7) Gecko/20100106 Ubuntu/9.10 (karmic) Firefox/3.5.7")
 
@@ -42,7 +44,8 @@
 			      cookies (seq (.getCookies (.getState client)))
 			      location-header (.getResponseHeader method "location")
 			      location (if (not (= nil location-header)) (.getValue location-header) nil)
-			      body (new String (.getResponseBody method))]
+			      body (with-open [stream (.getResponseBodyAsStream method)]
+					(apply str (line-seq (new BufferedReader (new InputStreamReader stream)))))]
 				{:status status :cookies cookies :body body :location location})
 			(finally (.releaseConnection method)))))
 
