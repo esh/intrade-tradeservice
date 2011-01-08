@@ -183,11 +183,12 @@
 						merge
 						@*active-orders*
 						{order-id (agent new-order)})
-					(send
-						old-order	
-						merge
-						@old-order
-						new-order)))
+					(if (not (= (get @old-order :state) (get new-order :state)))
+						(send
+							old-order	
+							merge
+							@old-order
+							new-order))))
 			(re-seq
 				#"<tr class=reportRow.+?/tr>"
 				(.replaceAll (get res :body) "(\r\n)|\t" "")))))
