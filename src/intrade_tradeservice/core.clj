@@ -7,10 +7,9 @@
 
 (def *user-agent* "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.1.7) Gecko/20100106 Ubuntu/9.10 (karmic) Firefox/3.5.7")
 
-(def *state* (ref 'logged-out))
-(def *quotes* (agent {}))
-(def *cookies* (ref ()))
-(def *url* (ref ""))
+(def *state* (atom 'logged-out))
+(def *cookies* (atom ()))
+(def *url* (atom ""))
 
 (defn http-req [method cookies params body]
 	(let [client (new HttpClient)
@@ -67,14 +66,15 @@
 		(get login1 :cookies)
 		{HttpMethodParams/USER_AGENT *user-agent*
 		"Referer" url})]
-		(dosync
-			(ref-set *cookies* (get login2 :cookies))
-			(ref-set *url* url)
-			(if (= 200 (get login2 :status))
-				(= 'logged-in (ref-set *state* 'logged-in))
-				(throw (new Exception "could not login"))))))
+		(compare-and-set! *cookies* @*cookies* (get login2 :cookies))
+		(compare-and-set! *url* @*url* url)
+		(if (= 200 (get login2 :status))
+			(compare-and-set! *state* @*state* 'logged-in)
+			(throw (new Exception "could not login")))))
 
-(defn logout [] (dosync (do (ref-set *cookies* ()) (ref-set *state* 'logged-out))))
+(defn logout [] (do
+	(compare-and-set! *cookies* @*cookies* ())
+	(compare-and-set! *state* @*state* 'logged-out)))
 
 (def get-quote (memoize (fn [contract-id]
 	(let [parser
