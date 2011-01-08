@@ -130,27 +130,27 @@
 		 "minutesTillExpiry" nil	
 		 "orderType" "L"
   		 "originalQuantity" (str qty)
-		 "quantity" (str qty)
-		 "request_operation" "enterOrder"
-		 "request_type" "request"
+		 "quantity" (str qty) "request_operation" "enterOrder" "request_type" "request"
 		 "resetLifetime" "gfs"
 		 "side" (when side (case 'BUY "B") (case 'SELL "S"))
 		 "timeInForce" "2"
 		 "touchPrice" nil	
 		 "type" "L"})
-		body (get res :body)
-		order (agent (if (re-seq #"order has been accepted" body)
-			{:contract-id contract-id
-			 :state 'NEW
-			 :order-id
-				(Integer/parseInt (nth
-					(first (re-seq #"contractID\"\D+(\d+)\">" body))
-					 1))}
-			{:contract-id contract-id
-			 :state 'REJECTED}))]
-		(swap! *active-orders* merge @*active-orders* {contract-id order})
-		order))
-
+		body (get res :body)]
+		(if (re-seq #"order has been accepted" body)
+			(let [order-id (Integer/parseInt 
+				(nth (first (re-seq #"Order ID\D+(\d+)" body)) 1))
+			      order (agent {:order-id order-id
+					    :contract-id contract-id
+				 	    :state 'NEW})]
+				(swap!
+					*active-orders*
+					merge
+					@*active-orders*
+					{order-id order}))
+			(agent {:contract-id contract-id
+			 	:state 'REJECTED}))))
+		
 (defn cancel-order [])
 
 (defn check-order []
@@ -163,16 +163,28 @@
 			#(let [s (.split
 					(.replaceAll (.replaceAll % "<.+?>" " ") " +" " ")
 					" ")
-			       order-id (nth s 1)
+			       order-id (Integer/parseInt (nth s 1))
 			       qty (Integer/parseInt (nth s 4))
 			       cum-qty (- qty (Integer/parseInt (nth s 5)))
 			       avg-price (Float/parseFloat (nth s 6))
-			       state (symbol (nth s 12))]
-				{:order-id order-id 
-				 :qty qty 
-				 :cum-qty cum-qty
-				 :avg-price avg-price
-				 :state state})
+			       state (symbol (nth s 12))
+			       old-order (get @*active-orders* order-id)
+			       new-order {:order-id order-id 
+					  :qty qty 
+					  :cum-qty cum-qty
+					  :avg-price avg-price
+					  :state state}]
+				(if (nil? old-order)
+					(swap!
+						*active-orders*
+						merge
+						@*active-orders*
+						{order-id (agent new-order)})
+					(send
+						old-order	
+						merge
+						@old-order
+						new-order)))
 			(re-seq
 				#"<tr class=reportRow.+?/tr>"
 				(.replaceAll (get res :body) "(\r\n)|\t" "")))))
