@@ -135,7 +135,9 @@
 		 "minutesTillExpiry" nil	
 		 "orderType" "L"
   		 "originalQuantity" (str qty)
-		 "quantity" (str qty) "request_operation" "enterOrder" "request_type" "request"
+		 "quantity" (str qty)
+		 "request_operation" "enterOrder"
+		 "request_type" "request"
 		 "resetLifetime" tif
 		 "side" side 
 		 "timeInForce" "2"
@@ -162,18 +164,22 @@
 				:qty qty
 			 	:state 'Rejected}))))
 		
-(defn cancel-order []
-	(comment
-contractID	401479
-orderID	1490495714
-request_operation	getDeleteOrderResponse
-request_type	action
-))
+(defn cancel-order [order]
+	(let [order-id (get @order :order-id)
+	      contract-id (get @order :contract-id) 
+	      res (http-post
+		@*url*
+		@*cookies* 
+		{HttpMethodParams/USER_AGENT *user-agent*}
+		{"contractID" (str contract-id)
+		 "orderID" (str order-id) 
+		 "request_operation" "getDeleteOrderResponse"
+		 "request_type" "action"})]
+		res))
 
 (defn check-order []
 	(let [res (http-get
-		(str @*url*
-		     "jsp/intrade/trading/t_p.jsp?reportType=1&fType=0&statusFilter=5&dateFilter=0&filter=All")
+		(str @*url* "jsp/intrade/trading/t_p.jsp?reportType=1&fType=0&statusFilter=5&dateFilter=0&filter=All")
 		@*cookies*
 		{HttpMethodParams/USER_AGENT *user-agent*})
 	      rows (re-seq
@@ -183,6 +189,7 @@ request_type	action
 			(let [s (.split
 				(.replaceAll (.replaceAll % "<.+?>" " ") " +" " ")
 				" ")
+			      contract-id (Integer/parseInt (nth (first (re-seq #"getOrder\('\d+','(\d+)" %)) 1))
 			      order-id (Integer/parseInt (nth s 1))
 			      qty (Integer/parseInt (nth s 4))
 			      cum-qty (- qty (Integer/parseInt (nth s 5)))
@@ -190,6 +197,7 @@ request_type	action
 			      state (symbol (nth s 12))
 			      old-order (get @*active-orders* order-id)
 			      new-order {:order-id order-id 
+					 :contract-id contract-id
 					 :qty qty 
 					 :cum-qty cum-qty
 					 :avg-price avg-price
