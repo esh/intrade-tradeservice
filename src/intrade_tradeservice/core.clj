@@ -124,7 +124,7 @@
 
 (defn send-order [& {:keys [contract-id side price qty tif]}]
 	(let [side (when side (case 'Buy "B") (case 'Sell "S"))
-	      tif (when tif (case 'GFS' "gfs") (case 'FOK "fok" ))
+	      tif (when tif (case 'GFS "gfs") (case 'FOK "fok" ))
 	      res (http-post
 		@*url*
 		@*cookies* 
@@ -134,7 +134,7 @@
 		 "limitPrice" (str price)
 		 "minutesTillExpiry" nil	
 		 "orderType" "L"
-  		 "originalQuantity" (str qty)
+  	 "originalQuantity" (str qty)
 		 "quantity" (str qty)
 		 "request_operation" "enterOrder"
 		 "request_type" "request"
