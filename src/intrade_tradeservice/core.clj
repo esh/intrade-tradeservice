@@ -162,29 +162,38 @@
 				:qty qty
 			 	:state 'Rejected}))))
 		
-(defn cancel-order [])
+(defn cancel-order []
+	(comment
+contractID	401479
+orderID	1490495714
+request_operation	getDeleteOrderResponse
+request_type	action
+))
 
 (defn check-order []
 	(let [res (http-get
 		(str @*url*
 		     "jsp/intrade/trading/t_p.jsp?reportType=1&fType=0&statusFilter=5&dateFilter=0&filter=All")
 		@*cookies*
-		{HttpMethodParams/USER_AGENT *user-agent*})]
-		(doall (map
-			#(let [s (.split
-					(.replaceAll (.replaceAll % "<.+?>" " ") " +" " ")
-					" ")
-			       order-id (Integer/parseInt (nth s 1))
-			       qty (Integer/parseInt (nth s 4))
-			       cum-qty (- qty (Integer/parseInt (nth s 5)))
-			       avg-price (Float/parseFloat (nth s 6))
-			       state (symbol (nth s 12))
-			       old-order (get @*active-orders* order-id)
-			       new-order {:order-id order-id 
-					  :qty qty 
-					  :cum-qty cum-qty
-					  :avg-price avg-price
-					  :state state}]
+		{HttpMethodParams/USER_AGENT *user-agent*})
+	      rows (re-seq
+		#"<tr class=reportRow.+?/tr>"
+		(.replaceAll (get res :body) "(\r\n)|\t" ""))]
+		(doall (map #(if (not (re-seq #"No Orders found" %))
+			(let [s (.split
+				(.replaceAll (.replaceAll % "<.+?>" " ") " +" " ")
+				" ")
+			      order-id (Integer/parseInt (nth s 1))
+			      qty (Integer/parseInt (nth s 4))
+			      cum-qty (- qty (Integer/parseInt (nth s 5)))
+			      avg-price (Float/parseFloat (nth s 6))
+			      state (symbol (nth s 12))
+			      old-order (get @*active-orders* order-id)
+			      new-order {:order-id order-id 
+					 :qty qty 
+					 :cum-qty cum-qty
+					 :avg-price avg-price
+					 :state state}]
 				(if (nil? old-order)
 					(swap!
 						*active-orders*
@@ -196,10 +205,8 @@
 							old-order	
 							merge
 							@old-order
-							new-order))))
-			(re-seq
-				#"<tr class=reportRow.+?/tr>"
-				(.replaceAll (get res :body) "(\r\n)|\t" ""))))))
+							new-order)))))
+			    rows))))
 
 (.start (new Thread (fn []
 	(loop []
