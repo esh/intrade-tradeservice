@@ -113,7 +113,7 @@
 				 :bids (map parser (re-seq #"setBid\(.*\)" body))
 				 :offers (map parser (re-seq #"setOffer\(.*\)" body))}
 			(throw (new Exception
-				(str "get-md got " status " from server")))))
+				(str "get-quote got " status " from server")))))
 	      quote (agent {:contract-id contract-id})]
 		(.start (new Thread (fn [] (loop []
 			(if (= 'logged-in @*state*)
@@ -174,8 +174,22 @@
 		{"contractID" (str contract-id)
 		 "orderID" (str order-id) 
 		 "request_operation" "getDeleteOrderResponse"
-		 "request_type" "action"})]
-		res))
+		 "request_type" "action"})
+	       body (get res :body)]
+		(if (re-seq #"An attempt has been made to cancel order" body)
+			(let [p (promise)]
+				(add-watch
+					order
+					'cancel-watcher
+					#(when (get %4 :state)
+						(case 'Cancelled (do
+							(deliver p true)
+							(remove-watch order 'cancel-watcher)))
+						(case 'Filled (do
+							(deliver p false)
+							(remove-watch order 'cancel-watcher)))))
+				@p)
+			(throw (new Exception "Request to cancel order failed")))))
 
 (defn check-order []
 	(let [res (http-get
