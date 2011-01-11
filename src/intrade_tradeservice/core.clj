@@ -1,4 +1,4 @@
-(ns tradeservice 
+(ns intrade_tradeservice 
 	(:import (org.apache.commons.httpclient HttpClient HttpState NameValuePair))
 	(:import (org.apache.commons.httpclient.methods GetMethod PostMethod))
 	(:import (org.apache.commons.httpclient.params HttpMethodParams))
@@ -70,15 +70,15 @@
 		(get login1 :cookies)
 		{HttpMethodParams/USER_AGENT *user-agent*
 		"Referer" url})]
-		(compare-and-set! *cookies* @*cookies* (get login2 :cookies))
-		(compare-and-set! *url* @*url* url)
+		(swap! *cookies* (get login2 :cookies))
+		(swap! *url* url)
 		(if (= 200 (get login2 :status))
-			(compare-and-set! *state* @*state* 'logged-in)
+			(swap! *state* 'logged-in)
 			(throw (new Exception "could not login")))))
 
 (defn logout [] (do
-	(compare-and-set! *cookies* @*cookies* ())
-	(compare-and-set! *state* @*state* 'logged-out)))
+	(swap! *cookies* ())
+	(swap! *state* 'logged-out)))
 
 (def get-quote (memoize (fn [contract-id]
 	(let [parser
