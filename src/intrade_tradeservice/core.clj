@@ -1,4 +1,4 @@
-(ns tradeservice 
+(ns intrade_tradeservice 
 	(:import (org.apache.commons.httpclient HttpClient HttpState NameValuePair))
 	(:import (org.apache.commons.httpclient.methods GetMethod PostMethod))
 	(:import (org.apache.commons.httpclient.params HttpMethodParams))
@@ -81,7 +81,9 @@
 	(compare-and-set! *state* @*state* 'logged-out)))
 
 (def get-quote (memoize (fn [contract-id]
-	(let [parser #({:qty (nth % 1) :price (nth % 2)})
+	(let [parser #(hash-map
+					:qty (Integer/parseInt (nth % 1))
+					:price (Float/parseFloat (nth % 2)))
 			  extractor #(let[contract-id (get % :contract-id)
 												res (http-get
 													(str (deref *url*)
@@ -100,8 +102,8 @@
 					(first (re-seq
 						#"\d{1,2}:\d{2}:\d{2}\w{2} GMT"
 						body))) 
-				 :bids (map parser (re-seq #"setBid\(\d+,(\d+),('\d+\.\d+')" body))
-				 :offers (map parser (re-seq #"setOffer\(\d+,(\d+),('\d+\.\d+')" body))}
+				 :bids (map parser (re-seq #"setBid\(\d+,(\d+),'(\d+\.\d+)'" body))
+				 :offers (map parser (re-seq #"setOffer\(\d+,(\d+),'(\d+\.\d+)'" body))}
 			(throw (new Exception
 				(str "get-quote got " status " from server")))))
 	      quote (agent {:contract-id contract-id})]
@@ -147,7 +149,8 @@
 					*active-orders*
 					merge
 					@*active-orders*
-					{order-id order}))
+					{order-id order})
+					order)
 			(agent {:contract-id contract-id
 			        :side side
 			        :tif tif 
