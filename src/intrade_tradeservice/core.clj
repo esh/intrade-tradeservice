@@ -81,28 +81,18 @@
 	(swap! *state* 'logged-out)))
 
 (def get-quote (memoize (fn [contract-id]
-	(let [parser
-		#(let [s (.split (.substring % 7 (- (.length %) 1)) ",")
-		       qty (Integer/parseInt (nth s 1))
-		       price (Float/parseFloat (.substring
-				(nth s 2)
-				1
-				(- (.length (nth s 2)) 1)))]
-			{:qty qty :price price})
-	      getter 
-		#(http-get
-			(str (deref *url*)
-			     "jsp/intrade/trading/mdupdate.jsp?conID="
-			     % 
-			     "&selConID="
-			     %)
-			(deref *cookies*)
-			{HttpMethodParams/USER_AGENT *user-agent*})
-	      extractor
-		#(let[contract-id (get % :contract-id)
-		      res (getter contract-id)
-		      status (get res :status)
-		      body (get res :body)]
+	(let [parser #({:qty (nth % 1) :price (nth % 2)})
+			  extractor #(let[contract-id (get % :contract-id)
+												res (http-get
+													(str (deref *url*)
+														"jsp/intrade/trading/mdupdate.jsp?conID="
+														contract-id 
+														"&selConID="
+														contract-id)
+													(deref *cookies*)
+													{HttpMethodParams/USER_AGENT *user-agent*})
+												status (get res :status)
+		    								body (get res :body)]
 			(if (= status 200) 
 				{:contract-id contract-id 
 				 :timestamp (.parse 
@@ -110,8 +100,8 @@
 					(first (re-seq
 						#"\d{1,2}:\d{2}:\d{2}\w{2} GMT"
 						body))) 
-				 :bids (map parser (re-seq #"setBid\(.*\)" body))
-				 :offers (map parser (re-seq #"setOffer\(.*\)" body))}
+				 :bids (map parser (re-seq #"setBid\(\d+,(\d+),('\d+\.\d+')" body))
+				 :offers (map parser (re-seq #"setOffer\(\d+,(\d+),('\d+\.\d+')" body))}
 			(throw (new Exception
 				(str "get-quote got " status " from server")))))
 	      quote (agent {:contract-id contract-id})]
