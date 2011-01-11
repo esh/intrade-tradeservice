@@ -115,8 +115,8 @@
 		quote))))
 
 (defn send-order [& {:keys [contract-id side price qty tif]}]
-	(let [side (when side (case 'Buy "B") (case 'Sell "S"))
-	      tif (when tif (case 'GFS "gfs") (case 'FOK "fok" ))
+	(let [side (case side 'Buy "B" 'Sell "S")
+	      tif (case tif 'GFS "gfs" 'FOK "fok")
 	      res (http-post
 		@*url*
 		@*cookies* 
@@ -161,26 +161,26 @@
 	(let [order-id (get @order :order-id)
 	      contract-id (get @order :contract-id) 
 	      res (http-post
-		@*url*
-		@*cookies* 
-		{HttpMethodParams/USER_AGENT *user-agent*}
-		{"contractID" (str contract-id)
-		 "orderID" (str order-id) 
-		 "request_operation" "getDeleteOrderResponse"
-		 "request_type" "action"})
+						@*url*
+						@*cookies* 
+						{HttpMethodParams/USER_AGENT *user-agent*}
+						{"contractID" (str contract-id)
+						 "orderID" (str order-id) 
+						 "request_operation" "getDeleteOrderResponse"
+						 "request_type" "action"})
 	       body (get res :body)]
 		(if (re-seq #"An attempt has been made to cancel order" body)
 			(let [p (promise)]
 				(add-watch
 					order
 					'cancel-watcher
-					#(when (get %4 :state)
-						(case 'Cancelled (do
+					#(case (get %4 :state)
+						'Cancelled (do
 							(deliver p true)
-							(remove-watch order 'cancel-watcher)))
-						(case 'Filled (do
+							(remove-watch order 'cancel-watcher))
+						'Filled (do
 							(deliver p false)
-							(remove-watch order 'cancel-watcher)))))
+							(remove-watch order 'cancel-watcher))))
 				@p)
 			(throw (new Exception "Request to cancel order failed")))))
 
