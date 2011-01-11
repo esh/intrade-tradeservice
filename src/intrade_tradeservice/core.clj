@@ -115,9 +115,7 @@
 		quote))))
 
 (defn send-order [& {:keys [contract-id side price qty tif]}]
-	(let [side (case side 'Buy "B" 'Sell "S")
-	      tif (case tif 'GFS "gfs" 'FOK "fok")
-	      res (http-post
+	(let [res (http-post
 		@*url*
 		@*cookies* 
 		{HttpMethodParams/USER_AGENT *user-agent*}
@@ -125,16 +123,16 @@
 		 "killtime" nil	
 		 "limitPrice" (str price)
 		 "minutesTillExpiry" nil	
-		 "orderType" "L"
+		 "orderType" (case tif 'GFS "L" 'FOK "F")
   	 "originalQuantity" (str qty)
 		 "quantity" (str qty)
 		 "request_operation" "enterOrder"
 		 "request_type" "request"
-		 "resetLifetime" tif
-		 "side" side 
+		 "resetLifetime" (case tif 'GFS "gfs" 'FOK "fok")
+		 "side" (case side 'Buy "B" 'Sell "S") 
 		 "timeInForce" "2"
 		 "touchPrice" nil	
-		 "type" "L"})
+		 "type" (case tif 'GFS "L" 'FOK "F")})
 		body (get res :body)]
 		(if (re-seq #"order has been accepted" body)
 			(let [order-id (Integer/parseInt 
