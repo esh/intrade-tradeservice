@@ -1,4 +1,4 @@
-(ns intrade_tradeservice 
+(ns tradeservice 
 	(:import (org.apache.commons.httpclient HttpClient HttpState NameValuePair))
 	(:import (org.apache.commons.httpclient.methods GetMethod PostMethod))
 	(:import (org.apache.commons.httpclient.params HttpMethodParams))
