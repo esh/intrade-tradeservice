@@ -196,6 +196,7 @@
 				" ")
 			      contract-id (Integer/parseInt (nth (first (re-seq #"getOrder\('\d+','(\d+)" %)) 1))
 			      order-id (Integer/parseInt (nth s 1))
+						side (symbol (nth s 3))
 			      qty (Integer/parseInt (nth s 4))
 			      cum-qty (- qty (Integer/parseInt (nth s 5)))
 			      price (Float/parseFloat (nth s 6))
@@ -203,6 +204,7 @@
 			      old-order (get @*orders* order-id)
 			      new-order {:order-id order-id 
 					 :contract-id contract-id
+					 :side side
 					 :qty qty 
 					 :cum-qty cum-qty
 					 :price price
