@@ -12,7 +12,7 @@
 (def *state* (atom 'logged-out))
 (def *url* (atom ""))
 (def *cookies* (atom ()))
-(def *active-orders* (atom {}))
+(def *orders* (atom {}))
 
 (defn http-req [method cookies params body]
 	(let [client (new HttpClient)
@@ -144,9 +144,9 @@
 					    :qty qty
 				 	    :state 'New})]
 				(swap!
-					*active-orders*
+					*orders*
 					merge
-					@*active-orders*
+					@*orders*
 					{order-id order})
 					order)
 			(agent {:contract-id contract-id
@@ -198,20 +198,20 @@
 			      order-id (Integer/parseInt (nth s 1))
 			      qty (Integer/parseInt (nth s 4))
 			      cum-qty (- qty (Integer/parseInt (nth s 5)))
-			      avg-price (Float/parseFloat (nth s 6))
+			      price (Float/parseFloat (nth s 6))
 			      state (symbol (nth s 12))
-			      old-order (get @*active-orders* order-id)
+			      old-order (get @*orders* order-id)
 			      new-order {:order-id order-id 
 					 :contract-id contract-id
 					 :qty qty 
 					 :cum-qty cum-qty
-					 :avg-price avg-price
+					 :price price
 					 :state state}]
 				(if (nil? old-order)
 					(swap!
-						*active-orders*
+						*orders*
 						merge
-						@*active-orders*
+						@*orders*
 						{order-id (agent new-order)})
 					(if (not (= (get @old-order :state) (get new-order :state)))
 						(send
