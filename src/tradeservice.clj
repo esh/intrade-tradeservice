@@ -8,7 +8,7 @@
 	(:import (java.io BufferedReader InputStreamReader)))
 
 (def *user-agent* "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.1.7) Gecko/20100106 Ubuntu/9.10 (karmic) Firefox/3.5.7")
-
+(def *tick-size* 0.1)
 (def *state* (atom 'logged-out))
 (def *url* (atom ""))
 (def *cookies* (atom ()))
